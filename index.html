@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYNDICT PRO — Dashboard de Supervision Temps Réel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-icon">🛡️</div>
+                <div class="brand-text">
+                    <h1>SYNDICT <span>PRO</span></h1>
+                    <p>SUPERVISION CLOUD</p>
+                </div>
+            </div>
+
+            <div class="guard-pill" id="activeGuardBadge">
+                <span class="pulse-dot"></span>
+                <span>Vigile en poste : <strong id="guardNameText">Vigile Principal</strong></span>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="live-guerite">
+                    <span class="icon">🚨</span>
+                    <span>Flux Live Guérite</span>
+                    <span class="badge" id="liveLogsCountBadge">0</span>
+                </button>
+                <button class="nav-item" data-tab="tresorerie">
+                    <span class="icon">💰</span>
+                    <span>Caisse &amp; Trésorerie</span>
+                </button>
+                <button class="nav-item" data-tab="residents">
+                    <span class="icon">🏢</span>
+                    <span>Registre &amp; Badges</span>
+                </button>
+                <button class="nav-item" data-tab="audit">
+                    <span class="icon">⚠️</span>
+                    <span>Audit Non-Flashés J+3</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="cloud-status">
+                    <span class="cloud-icon">☁️</span>
+                    <div>
+                        <div class="cloud-title">Firebase Connecté</div>
+                        <small id="lastSyncTime">diakitemakemin9@gmail.com</small>
+                    </div>
+                </div>
+                <button id="btnRefreshLive" class="btn-refresh">🔄 Actualiser le Direct</button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-title">
+                    <h2 id="residenceHeaderName">RÉSIDENCE AWALÉ</h2>
+                    <p id="syndicHeaderSubtitle">Syndic de Copropriété • Suivi des Accès &amp; Gestion Financière</p>
+                </div>
+
+                <div class="header-actions">
+                    <div class="clock-card" id="digitalClock">12:00:00</div>
+                    <button class="btn-export-csv" id="btnExportAllCsv">📥 Exporter Tout (CSV)</button>
+                </div>
+            </header>
+
+            <!-- KPI Metric Cards -->
+            <section class="kpi-grid">
+                <div class="kpi-card highlight-blue">
+                    <div class="kpi-header">
+                        <span>Solde Caisse Disponible</span>
+                        <span class="kpi-icon">💵</span>
+                    </div>
+                    <div class="kpi-value" id="kpiSoldeNet">0 FCFA</div>
+                    <div class="kpi-sub" id="kpiInitialCashDetail">Solde Initial : 0 FCFA</div>
+                </div>
+
+                <div class="kpi-card highlight-green">
+                    <div class="kpi-header">
+                        <span>Total Encaissé</span>
+                        <span class="kpi-icon">📈</span>
+                    </div>
+                    <div class="kpi-value text-green" id="kpiTotalEncaissement">0 FCFA</div>
+                    <div class="kpi-sub" id="kpiQuittancesCount">0 quittances validées</div>
+                </div>
+
+                <div class="kpi-card highlight-purple">
+                    <div class="kpi-header">
+                        <span>Passages Guérite (Aujourd'hui)</span>
+                        <span class="kpi-icon">🚗</span>
+                    </div>
+                    <div class="kpi-value" id="kpiPassagesCount">0</div>
+                    <div class="kpi-sub" id="kpiEntreesSortiesSplit">0 Entrées • 0 Sorties</div>
+                </div>
+
+                <div class="kpi-card highlight-red">
+                    <div class="kpi-header">
+                        <span>Lots à Contrôler (J+3)</span>
+                        <span class="kpi-icon">🚨</span>
+                    </div>
+                    <div class="kpi-value text-red" id="kpiNonScannedCount">0</div>
+                    <div class="kpi-sub">Villas sans scan récent</div>
+                </div>
+            </section>
+
+            <!-- Tab 1: Flux Live Guérite -->
+            <section id="tab-live-guerite" class="tab-panel active">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <h3>🚨 Flux des Entrées &amp; Sorties en Direct (Guérite)</h3>
+                            <p class="panel-sub">Suivi en temps réel des pointages effectués par les vigiles au portail de sécurité.</p>
+                        </div>
+                        <div class="filter-group">
+                            <input type="text" id="inputSearchLogs" placeholder="🔍 Filtrer par villa, résident, vigile..." class="search-input">
+                            <select id="selectLogTypeFilter" class="select-filter">
+                                <option value="ALL">Tous les mouvements</option>
+                                <option value="ENTREE">🟢 Entrées uniquement</option>
+                                <option value="SORTIE">🔵 Sorties uniquement</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Horodatage</th>
+                                    <th>Mouvement</th>
+                                    <th>Villa / Lot</th>
+                                    <th>Résident</th>
+                                    <th>Statut d'Accès</th>
+                                    <th>Vigile en Poste</th>
+                                    <th>Méthode</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyLiveLogs">
+                                <tr>
+                                    <td colspan="7" class="loading-state">⏳ Chargement des données en direct depuis Firebase...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 2: Caisse & Trésorerie -->
+            <section id="tab-tresorerie" class="tab-panel">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <h3>💰 Journal des Encaissements &amp; Dépenses</h3>
+                            <p class="panel-sub">Comptabilité intégrée avec solde initial et reçus certifiés.</p>
+                        </div>
+                        <div class="filter-group">
+                            <input type="text" id="inputSearchPayments" placeholder="🔍 Rechercher quittance, lot..." class="search-input">
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>N° Quittance</th>
+                                    <th>Villa</th>
+                                    <th>Résident</th>
+                                    <th>Mois Réglés</th>
+                                    <th>Montant</th>
+                                    <th>Mode</th>
+                                    <th>Encaissé Par</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyPayments">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 3: Registre Résidents & Badges -->
+            <section id="tab-residents" class="tab-panel">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <h3>🏢 Registre des Résidents &amp; Badges Permanents</h3>
+                            <p class="panel-sub">Gestion des 154 lots, statuts de cotisation et versioning des badges anti-fraude.</p>
+                        </div>
+                        <div class="filter-group">
+                            <input type="text" id="inputSearchLots" placeholder="🔍 Rechercher villa, nom, contact..." class="search-input">
+                            <select id="selectLotStatusFilter" class="select-filter">
+                                <option value="ALL">Tous les statuts</option>
+                                <option value="UP_TO_DATE">🟢 À jour uniquement</option>
+                                <option value="LATE">🔴 En retard uniquement</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>N° Villa</th>
+                                    <th>Résident</th>
+                                    <th>Type</th>
+                                    <th>Contact</th>
+                                    <th>Mois Début</th>
+                                    <th>Total Réglé</th>
+                                    <th>Statut</th>
+                                    <th>Token Badge</th>
+                                    <th>Dernier Scan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyLots">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 4: Audit Non-Flashés J+3 -->
+            <section id="tab-audit" class="tab-panel">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <h3>⚠️ Audit Anti-Fraude : Lots Non-Flashés à J+3</h3>
+                            <p class="panel-sub">Liste des villas occupées n'ayant aucun enregistrement de passage par la guérite 3 jours après la fin du mois.</p>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>N° Villa</th>
+                                    <th>Résident</th>
+                                    <th>Type</th>
+                                    <th>Téléphone</th>
+                                    <th>Statut Cotisation</th>
+                                    <th>Dernier Scan Enregistré</th>
+                                    <th>Niveau d'Alerte</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyAudit">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
